@@ -1,0 +1,29 @@
+include "lpm_ram_dq.inc";
+subdesign mem
+(
+    address[7..0] : input;
+    dataIn[15..0] : input;
+    dataOut[15..0] : output;
+    write : input; % write enable %
+    clk : input;
+)
+
+variable
+    ram : lpm_ram_dq with
+    (
+        lpm_width = 16,
+        lpm_widthad = 8,
+        lpm_file = "source.mif",
+        lpm_indata = "registered",
+        lpm_outdata = "registered",
+        lpm_address_control = "registered"
+    );
+
+begin
+    ram.data[] = dataIn[];
+    ram.address[] = address[];
+    ram.we = write;
+    ram.(inclock, outclock) = (clk, clk);
+
+    dataOut[] = ram.q[];
+end;

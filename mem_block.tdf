@@ -1,7 +1,9 @@
+% MEMORY %
+
 include "lpm_ram_dq.inc";
-subdesign mem
+subdesign mem_block
 (
-    address[7..0] : input;
+    addr[7..0] : input;
     dataIn[15..0] : input;
     dataOut[15..0] : output;
     write : input; % write enable %
@@ -21,7 +23,7 @@ variable
 
 begin
     ram.data[] = dataIn[];
-    ram.address[] = address[];
+    ram.address[] = addr[];
     ram.we = write;
     ram.(inclock, outclock) = (clk, clk);
 

@@ -1,4 +1,6 @@
-subdesign ip
+% INSTRUCTION POINTER %
+
+subdesign ip_block
 (
     addrIn[7..0] : input;
     addrOut[7..0] : output;

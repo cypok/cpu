@@ -9,17 +9,16 @@ subdesign ip
 
 variable
     reg[7..0] : dff;
-    carr[7..0] : node;
+    carr[6..0] : node;
 
 begin
     reg[].(clrn, prn, clk) = (VCC, VCC, clk);
 
-    reg[0].d = load & addrIn[0] # !load & inc & !reg[0].q;
-    carr[0] = reg[0].q;
-    for i in 1 to 7 generate
-        reg[i].d = load & addrIn[i] # !load & inc & (reg[i].q $ carr[i-1]);
-        carr[i] = reg[i].q & carr[i-1];
-    end generate;
+    carr[0] =    reg[0].q;
+    carr[6..1] = reg[6..1].q & carr[5..0];
+
+    reg[0].d =    load & addrIn[0]    # !load & inc & !reg[0].q;
+    reg[7..1].d = load & addrIn[7..1] # !load & inc & (reg[7..1].q $ carr[6..0]);
 
     addrOut[] = reg[].q;
 end;

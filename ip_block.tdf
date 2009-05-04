@@ -10,7 +10,7 @@ subdesign ip_block
 )
 
 variable
-    reg[7..0] : dff;
+    reg[7..0] : dffe;
     carr[6..0] : node;
 
 begin
@@ -19,6 +19,7 @@ begin
     carr[0] =    reg[0].q;
     carr[6..1] = reg[6..1].q & carr[5..0];
 
+    reg[].ena = inc # load;
     reg[0].d =    load & addrIn[0]    # !load & inc & !reg[0].q;
     reg[7..1].d = load & addrIn[7..1] # !load & inc & (reg[7..1].q $ carr[6..0]);
 

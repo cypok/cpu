@@ -4,8 +4,8 @@ subdesign ip_block
 (
     addrIn[7..0] : input;
     addrOut[7..0] : output;
-    inc : input; % increment IP %
-    load : input; % load addIn to IP (more important than inc) %
+    mode : input; % low - increment, high - load %
+    ena : input;
     clk : input;
 )
 
@@ -19,9 +19,9 @@ begin
     carr[0] =    reg[0].q;
     carr[6..1] = reg[6..1].q & carr[5..0];
 
-    reg[].ena = inc # load;
-    reg[0].d =    load & addrIn[0]    # !load & inc & !reg[0].q;
-    reg[7..1].d = load & addrIn[7..1] # !load & inc & (reg[7..1].q $ carr[6..0]);
+    reg[].ena = ena;
+    reg[0].d =    mode & addrIn[0]    # !mode & !reg[0].q;
+    reg[7..1].d = mode & addrIn[7..1] # !mode & (reg[7..1].q $ carr[6..0]);
 
     addrOut[] = reg[].q;
 end;

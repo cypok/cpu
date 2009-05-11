@@ -1,3 +1,6 @@
+constant IC_NOP = h"00";
+constant IC_HLT = h"ff";
+
 subdesign cu_block
 (
     clk : input;
@@ -12,17 +15,20 @@ subdesign cu_block
     mem_dbus_ena : output;
 
     ir_ena : output;
+
+    halted, error : output;
 )
 
 variable
     fsm : machine
         with states (   
                         start,
-                        set_mem_addr,
+                        setting_mem_addr,
                         getting_mem_data,
-                        got_mem_data,
-                        process_instr,
-                        changing_ip
+                        processing,
+                        changing_ip,
+                        halted,
+                        error
                     );
 
 begin
@@ -35,31 +41,41 @@ begin
         mem_dbus_ena = GND;
 
         ir_ena = GND;
+
+        halted = GND;
+        error = GND;
     end defaults;
 
     fsm.(reset, ena, clk) = (GND, VCC, clk);
 
     case fsm is
-    when start =>               fsm = set_mem_addr;
-        ip_abus_ena = VCC;
+        when start =>               fsm = setting_mem_addr;
+            ip_abus_ena = VCC;
 
-    when set_mem_addr =>        fsm = getting_mem_data;
+        when setting_mem_addr =>    fsm = getting_mem_data;
 
-    when getting_mem_data =>    fsm = got_mem_data;
-        mem_dbus_ena = VCC;
-        ir_ena = VCC;
+        when getting_mem_data =>    fsm = processing;
+            mem_dbus_ena = VCC;
+            ir_ena = VCC;
 
-    when got_mem_data =>        fsm = process_instr;
-        ip_mode = GND;
-        ip_ena = VCC;
+        when processing =>
+            case icr[] is
+                when IC_NOP =>      fsm = changing_ip;
+                when IC_HLT =>      fsm = halted;
+                when others =>      fsm = error;
+            end case;
+            
+            ip_mode = GND;
+            ip_ena = VCC;
 
-    when process_instr =>       fsm = changing_ip;
-        case dr
+        when changing_ip =>         fsm = setting_mem_addr;
+            ip_abus_ena = VCC;
 
-    when changing_ip =>         fsm = set_mem_addr;
-        ip_abus_ena = VCC;
+        when halted =>              fsm = halted;
+            halted = VCC;
 
-    when idle =>                fsm = idle;
+        when error =>               fsm = error;
+            error = VCC;
 
     end case;
 end;

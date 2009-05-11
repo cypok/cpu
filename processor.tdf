@@ -9,6 +9,8 @@ subdesign processor
     databus[15..0] : output;
     addrbus[7..0] : output;
     instrreg[15..0] : output;
+
+    halted, error : output;
 )
 
 variable
@@ -24,6 +26,8 @@ variable
 begin
     (mem, ip, cu).clk = clk;
 
+    (halted, error) = cu.(halted, error);
+
     mem.addr[] = abus[];
     mem.dataIn[] = dbus[];
     mem.write = cu.mem_write;
@@ -34,10 +38,10 @@ begin
 
     ir[].(clrn, prn, clk) = (VCC, VCC, clk);
     ir[].ena = cu.ir_ena;
-    ir[] = dbus[15..0];
+    ir[].d = dbus[15..0];
 
-    cu.ar[] = ir[15..8];
-    cu.icr[] = ir[7..0];
+    cu.ar[] = ir[15..8].q;
+    cu.icr[] = ir[7..0].q;
 
     for i in 0 to 15 generate
         dbus[i] = tri( mem.dataOut[i], cu.mem_dbus_ena );

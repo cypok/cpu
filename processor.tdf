@@ -1,0 +1,55 @@
+include "mem_block.inc";
+include "ip_block.inc";
+include "cu_block.inc";
+
+subdesign processor
+(
+    clk : input;
+
+    databus[15..0] : output;
+    addrbus[7..0] : output;
+    instrreg[15..0] : output;
+)
+
+variable
+    mem : mem_block;
+    ip : ip_block;
+    cu : cu_block;
+
+    dbus[15..0] : tri_state_node;
+    abus[7..0] : tri_state_node;
+
+    ir[15..0] : dffe;
+
+begin
+    (mem, ip, cu).clk = clk;
+
+    mem.addr[] = abus[];
+    mem.dataIn[] = dbus[];
+    mem.write = cu.mem_write;
+    
+    ip.addrIn[] = abus[];
+    ip.mode = cu.ip_mode;
+    ip.ena = cu.ip_ena;
+
+    ir[].(clrn, prn, clk) = (VCC, VCC, clk);
+    ir[].ena = cu.ir_ena;
+    ir[] = dbus[15..0];
+
+    cu.ar[] = ir[15..8];
+    cu.icr[] = ir[7..0];
+
+    for i in 0 to 15 generate
+        dbus[i] = tri( mem.dataOut[i], cu.mem_dbus_ena );
+        dbus[i] = tri( VCC, !cu.mem_dbus_ena );
+    end generate;
+
+    for i in 0 to 7 generate
+        abus[i] = tri( ip.addrOut[i], cu.ip_abus_ena );
+        abus[i] = tri( VCC, !cu.ip_abus_ena );
+    end generate;
+
+    addrbus[] = abus[];
+    databus[] = dbus[];
+    instrreg[] = ir[];
+end;

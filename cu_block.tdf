@@ -1,0 +1,65 @@
+subdesign cu_block
+(
+    clk : input;
+    ar[7..0] : input;
+    icr[7..0] : input;
+
+    ip_mode : output;
+    ip_ena : output;
+    ip_abus_ena : output;
+
+    mem_write : output;
+    mem_dbus_ena : output;
+
+    ir_ena : output;
+)
+
+variable
+    fsm : machine
+        with states (   
+                        start,
+                        set_mem_addr,
+                        getting_mem_data,
+                        got_mem_data,
+                        process_instr,
+                        changing_ip
+                    );
+
+begin
+    defaults
+        ip_mode = GND;
+        ip_ena = GND;
+        ip_abus_ena = GND;
+
+        mem_write = GND;
+        mem_dbus_ena = GND;
+
+        ir_ena = GND;
+    end defaults;
+
+    fsm.(reset, ena, clk) = (GND, VCC, clk);
+
+    case fsm is
+    when start =>               fsm = set_mem_addr;
+        ip_abus_ena = VCC;
+
+    when set_mem_addr =>        fsm = getting_mem_data;
+
+    when getting_mem_data =>    fsm = got_mem_data;
+        mem_dbus_ena = VCC;
+        ir_ena = VCC;
+
+    when got_mem_data =>        fsm = process_instr;
+        ip_mode = GND;
+        ip_ena = VCC;
+
+    when process_instr =>       fsm = changing_ip;
+        case dr
+
+    when changing_ip =>         fsm = set_mem_addr;
+        ip_abus_ena = VCC;
+
+    when idle =>                fsm = idle;
+
+    end case;
+end;

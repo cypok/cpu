@@ -7,7 +7,7 @@ data_radix = hex;
 content
     begin
      0 : 0100; -- nop
-     1 : 0300; -- nop
+     1 : 0410; -- lda 4
      2 : 0500; -- nop
      3 : 07ff; -- hlt
      4 : 090a;

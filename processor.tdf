@@ -11,6 +11,7 @@ subdesign processor
     instrreg[15..0] : output;
 
     halted, error : output;
+    areg[15..0] : output;
 )
 
 variable
@@ -22,6 +23,7 @@ variable
     abus[7..0] : tri_state_node;
 
     ir[15..0] : dffe;
+    ar[15..0] : dffe;
 
 begin
     (mem, ip, cu).clk = clk;
@@ -40,20 +42,26 @@ begin
     ir[].ena = cu.ir_ena;
     ir[].d = dbus[15..0];
 
-    cu.ar[] = ir[15..8].q;
     cu.icr[] = ir[7..0].q;
+
+    ar[].(clrn, prn, clk) = (VCC, VCC, clk);
+    ar[].ena = cu.ar_ena;
+    ar[].d = dbus[15..0];
 
     for i in 0 to 15 generate
         dbus[i] = tri( mem.dataOut[i], cu.mem_dbus_ena );
-        dbus[i] = tri( VCC, !cu.mem_dbus_ena );
+        dbus[i] = tri( ar[i].q, cu.ar_dbus_ena );
+        dbus[i] = tri( VCC, !(cu.mem_dbus_ena # cu.ar_dbus_ena) );
     end generate;
 
     for i in 0 to 7 generate
         abus[i] = tri( ip.addrOut[i], cu.ip_abus_ena );
-        abus[i] = tri( VCC, !cu.ip_abus_ena );
+        abus[i] = tri( ir[8+i].q, cu.ir_abus_ena ); -- abus[7..0] = ir[15..8]
+        abus[i] = tri( VCC, !(cu.ip_abus_ena # cu.ir_abus_ena) );
     end generate;
 
     addrbus[] = abus[];
     databus[] = dbus[];
     instrreg[] = ir[];
+    areg[] = ar[];
 end;

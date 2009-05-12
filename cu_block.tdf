@@ -1,10 +1,11 @@
-constant IC_NOP = h"00";
-constant IC_HLT = h"ff";
+constant IC_NOP = h"00"; -- 
+constant IC_HLT = h"ff"; -- halted = VCC
+constant IC_LDA = h"10"; -- Ar = mem[ir.addr]
+constant IC_STA = h"20"; -- mem[ir.addr] = Ar
 
 subdesign cu_block
 (
     clk : input;
-    ar[7..0] : input;
     icr[7..0] : input;
 
     ip_mode : output;
@@ -15,6 +16,10 @@ subdesign cu_block
     mem_dbus_ena : output;
 
     ir_ena : output;
+    ir_abus_ena : output;
+    
+    ar_ena : output;
+    ar_dbus_ena : output;
 
     halted, error : output;
 )
@@ -27,8 +32,12 @@ variable
                         getting_mem_data,
                         processing,
                         changing_ip,
+
                         halted,
-                        error
+                        error,
+
+                        lda_setting_mem_addr,
+                        lda_getting_mem_data
                     );
 
 begin
@@ -41,6 +50,10 @@ begin
         mem_dbus_ena = GND;
 
         ir_ena = GND;
+        ir_abus_ena = GND;
+
+        ar_ena = GND;
+        ar_dbus_ena = GND;
 
         halted = GND;
         error = GND;
@@ -58,16 +71,6 @@ begin
             mem_dbus_ena = VCC;
             ir_ena = VCC;
 
-        when processing =>
-            case icr[] is
-                when IC_NOP =>      fsm = changing_ip;
-                when IC_HLT =>      fsm = halted;
-                when others =>      fsm = error;
-            end case;
-            
-            ip_mode = GND;
-            ip_ena = VCC;
-
         when changing_ip =>         fsm = setting_mem_addr;
             ip_abus_ena = VCC;
 
@@ -76,6 +79,32 @@ begin
 
         when error =>               fsm = error;
             error = VCC;
+
+        when processing =>
+            case icr[] is
+                when IC_NOP =>          fsm = changing_ip;
+                    ip_mode = GND; -- increment ip
+                    ip_ena = VCC;
+
+                when IC_HLT =>          fsm = halted;
+
+                when IC_LDA =>          fsm = lda_setting_mem_addr;
+                    ir_abus_ena = VCC;
+
+                when others =>          fsm = error;
+
+            end case;
+
+
+        % L D A %
+        when lda_setting_mem_addr => fsm = lda_getting_mem_data;
+        when lda_getting_mem_data => fsm = changing_ip;
+            mem_dbus_ena = VCC; -- read data
+            ar_ena = VCC; -- write it to Ar
+
+            ip_mode = GND; -- increment ip
+            ip_ena = VCC;
+
 
     end case;
 end;

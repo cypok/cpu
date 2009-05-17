@@ -2,6 +2,7 @@ constant IC_NOP = h"00"; --
 constant IC_HLT = h"ff"; -- halted = VCC
 constant IC_LDA = h"10"; -- Ar = mem[ir.addr]
 constant IC_STA = h"20"; -- mem[ir.addr] = Ar
+constant IC_JMP = h"30"; -- ip = ir.addr
 
 subdesign cu_block
 (
@@ -97,6 +98,11 @@ begin
                     ar_dbus_ena = VCC;
                     ir_abus_ena = VCC;
                     mem_write = VCC;
+
+                when IC_JMP =>          fsm = changing_ip;
+                    ir_abus_ena = VCC;
+                    ip_mode = VCC;
+                    ip_ena = VCC;
 
                 when others =>          fsm = error;
 

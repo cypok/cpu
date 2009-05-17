@@ -37,7 +37,9 @@ variable
                         error,
 
                         lda_setting_mem_addr,
-                        lda_getting_mem_data
+                        lda_getting_mem_data,
+
+                        sta_writing
                     );
 
 begin
@@ -91,6 +93,11 @@ begin
                 when IC_LDA =>          fsm = lda_setting_mem_addr;
                     ir_abus_ena = VCC;
 
+                when IC_STA =>          fsm = sta_writing;
+                    ar_dbus_ena = VCC;
+                    ir_abus_ena = VCC;
+                    mem_write = VCC;
+
                 when others =>          fsm = error;
 
             end case;
@@ -105,6 +112,10 @@ begin
             ip_mode = GND; -- increment ip
             ip_ena = VCC;
 
+        % STA %
+        when sta_writing =>         fsm = changing_ip;
+            ip_mode = GND;
+            ip_ena = VCC;
 
     end case;
 end;

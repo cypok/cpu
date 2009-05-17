@@ -1,0 +1,38 @@
+include "lpm_add_sub.inc";
+
+constant AU_ADD = b"00";
+constant AU_SUB = b"01";
+
+subdesign au_block
+(
+    in1[15..0], in2[15..0] : input;
+    mode[1..0], ena, clk : input;
+
+    out[15..0], of_state : output;
+)
+variable
+    state : dffe;
+    add_sub : lpm_add_sub with (
+        lpm_width = 16,
+        lpm_representation = "unsigned",
+        lpm_pipeline = 1
+    );
+
+begin
+    state.(clrn, prn, clk) = (VCC, VCC, clk);
+    state.ena = ena;
+    
+    add_sub.clock = clk;
+    add_sub.dataa[] = in1[];
+    add_sub.datab[] = in2[];
+
+    case mode[] is
+    when AU_ADD => add_sub.add_sub = VCC;
+    when AU_SUB => add_sub.add_sub = GND;
+    end case;
+
+    state.d = add_sub.overflow;
+
+    out[] = add_sub.result[] & ena;
+    of_state = state.q;
+end;

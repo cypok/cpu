@@ -3,11 +3,14 @@ constant IC_HLT = h"ff"; -- halted = VCC
 constant IC_LDA = h"10"; -- Ar = mem[ir.addr]
 constant IC_STA = h"20"; -- mem[ir.addr] = Ar
 constant IC_JMP = h"30"; -- ip = ir.addr
+constant IC_ADD = h"40"; -- Ar += mem[ir.addr]
+constant IC_SUB = h"41"; -- Ar -= mem[ir.addr]
 
 subdesign cu_block
 (
     clk : input;
     icr[7..0] : input;
+    of_state : input;
 
     ip_mode : output;
     ip_ena : output;
@@ -21,6 +24,9 @@ subdesign cu_block
     
     ar_ena : output;
     ar_dbus_ena : output;
+
+    au_mode[1..0] : output;
+    au_ena : output;
 
     halted, error : output;
 )
@@ -40,7 +46,11 @@ variable
                         lda_setting_mem_addr,
                         lda_getting_mem_data,
 
-                        sta_writing
+                        sta_writing,
+
+                        au_setting_mem_addr,
+                        au_getting_mem_data,
+                        au_working
                     );
 
 begin
@@ -57,6 +67,9 @@ begin
 
         ar_ena = GND;
         ar_dbus_ena = GND;
+
+        au_ena = GND;
+        au_mode[] = GND;
 
         halted = GND;
         error = GND;
@@ -104,6 +117,13 @@ begin
                     ip_mode = VCC;
                     ip_ena = VCC;
 
+                when IC_ADD =>          fsm = au_setting_mem_addr;
+                    ir_abus_ena = VCC;
+
+                when IC_SUB =>          fsm = au_setting_mem_addr;
+                    ir_abus_ena = VCC;
+
+
                 when others =>          fsm = error;
 
             end case;
@@ -120,6 +140,18 @@ begin
 
         % STA %
         when sta_writing =>         fsm = changing_ip;
+            ip_mode = GND;
+            ip_ena = VCC;
+
+        % AU %
+        when au_setting_mem_addr => fsm = au_getting_mem_data;
+        when au_getting_mem_data => fsm = au_working;
+            mem_dbus_ena = VCC;
+            au_mode[] = icr[1..0];
+        when au_working          => fsm = changing_ip;
+            au_ena = VCC;
+            ar_ena = VCC;
+
             ip_mode = GND;
             ip_ena = VCC;
 

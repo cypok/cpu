@@ -1,6 +1,7 @@
 include "mem_block.inc";
 include "ip_block.inc";
 include "cu_block.inc";
+include "au_block.inc";
 
 subdesign processor
 (
@@ -11,6 +12,7 @@ subdesign processor
     instrreg[15..0] : output;
 
     halted, error : output;
+    of_state : output;
     areg[15..0] : output;
 )
 
@@ -18,6 +20,7 @@ variable
     mem : mem_block;
     ip : ip_block;
     cu : cu_block;
+    au : au_block;
 
     dbus[15..0] : tri_state_node;
     abus[7..0] : tri_state_node;
@@ -26,7 +29,7 @@ variable
     ar[15..0] : dffe;
 
 begin
-    (mem, ip, cu).clk = clk;
+    (mem, ip, cu, au).clk = clk;
 
     (halted, error) = cu.(halted, error);
 
@@ -48,10 +51,19 @@ begin
     ar[].ena = cu.ar_ena;
     ar[].d = dbus[15..0];
 
+    au.mode[] = cu.au_mode[];
+    au.ena = cu.au_ena;
+    au.in1[] = ar[].q;
+    au.in2[] = dbus[];
+
+    cu.of_state = au.of_state;
+    of_state = au.of_state;
+
     for i in 0 to 15 generate
         dbus[i] = tri( mem.dataOut[i], cu.mem_dbus_ena );
         dbus[i] = tri( ar[i].q, cu.ar_dbus_ena );
-        dbus[i] = tri( VCC, !(cu.mem_dbus_ena # cu.ar_dbus_ena) );
+        dbus[i] = tri( au.out[i], cu.au_ena );
+        dbus[i] = tri( VCC, !(cu.mem_dbus_ena # cu.ar_dbus_ena # cu.au_ena) );
     end generate;
 
     for i in 0 to 7 generate

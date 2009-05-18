@@ -3,6 +3,8 @@ constant IC_HLT = h"ff"; -- halted = VCC
 constant IC_LDA = h"10"; -- Ar = mem[ir.addr]
 constant IC_STA = h"20"; -- mem[ir.addr] = Ar
 constant IC_JMP = h"30"; -- ip = ir.addr
+constant IC_JOV = h"31"; --     if OF == 1
+constant IC_JNOV= h"32"; --     if OF == 0
 constant IC_ADD = h"40"; -- Ar += mem[ir.addr]
 constant IC_SUB = h"41"; -- Ar -= mem[ir.addr]
 
@@ -117,6 +119,18 @@ begin
                 when IC_JMP =>          fsm = changing_ip;
                     ir_abus_ena = VCC;
                     ip_mode = VCC;
+                    ip_ena = VCC;
+
+                when IC_JOV =>          fsm = changing_ip;
+                    ir_abus_ena = of_state;
+                    ip_mode = of_state;
+                    au_of_reset = VCC;
+                    ip_ena = VCC;
+
+                when IC_JNOV =>         fsm = changing_ip;
+                    ir_abus_ena = !of_state;
+                    ip_mode = !of_state;
+                    au_of_reset = VCC;
                     ip_ena = VCC;
 
                 when IC_ADD =>          fsm = au_setting_mem_addr;

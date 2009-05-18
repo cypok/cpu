@@ -7,6 +7,7 @@ subdesign au_block
 (
     in1[15..0], in2[15..0] : input;
     mode[1..0], ena, clk : input;
+    reset : input;
 
     out[15..0], of_state : output;
 )
@@ -20,7 +21,7 @@ variable
 
 begin
     state.(clrn, prn, clk) = (VCC, VCC, clk);
-    state.ena = ena;
+    state.ena = ena # reset;
     
     add_sub.clock = clk;
     add_sub.dataa[] = in1[];
@@ -31,7 +32,7 @@ begin
     when AU_SUB => add_sub.add_sub = GND;
     end case;
 
-    state.d = add_sub.overflow;
+    state.d = add_sub.overflow & !reset;
 
     out[] = add_sub.result[] & ena;
     of_state = state.q;

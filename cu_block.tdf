@@ -27,6 +27,7 @@ subdesign cu_block
 
     au_mode[1..0] : output;
     au_ena : output;
+    au_of_reset : output;
 
     halted, error : output;
 )
@@ -70,6 +71,7 @@ begin
 
         au_ena = GND;
         au_mode[] = GND;
+        au_of_reset = GND;
 
         halted = GND;
         error = GND;

@@ -53,6 +53,7 @@ begin
 
     au.mode[] = cu.au_mode[];
     au.ena = cu.au_ena;
+    au.reset = cu.au_of_reset;
     au.in1[] = ar[].q;
     au.in2[] = dbus[];
 

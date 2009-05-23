@@ -7,6 +7,8 @@ constant IC_JOV = h"31"; --     if OF == 1
 constant IC_JNOV= h"32"; --     if OF == 0
 constant IC_ADD = h"40"; -- Ar += mem[ir.addr]
 constant IC_SUB = h"41"; -- Ar -= mem[ir.addr]
+constant IC_MUL = h"42"; -- Ar *= mem[ir.addr]
+constant IC_DIV = h"43"; -- Ar /= mem[ir.addr]
 
 subdesign cu_block
 (
@@ -27,7 +29,7 @@ subdesign cu_block
     ar_ena : output;
     ar_dbus_ena : output;
 
-    au_mode[1..0] : output;
+    au_mode[3..0] : output;
     au_ena : output;
     au_of_reset : output;
 
@@ -139,6 +141,12 @@ begin
                 when IC_SUB =>          fsm = au_setting_mem_addr;
                     ir_abus_ena = VCC;
 
+                when IC_MUL =>          fsm = au_setting_mem_addr;
+                    ir_abus_ena = VCC;
+
+                when IC_DIV =>          fsm = au_setting_mem_addr;
+                    ir_abus_ena = VCC;
+
 
                 when others =>          fsm = error;
 
@@ -163,8 +171,9 @@ begin
         when au_setting_mem_addr => fsm = au_getting_mem_data;
         when au_getting_mem_data => fsm = au_working;
             mem_dbus_ena = VCC;
-            au_mode[] = icr[1..0];
+            au_mode[] = icr[3..0];
         when au_working          => fsm = changing_ip;
+            au_mode[] = icr[3..0];
             au_ena = VCC;
             ar_ena = VCC;
 

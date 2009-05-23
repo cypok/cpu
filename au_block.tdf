@@ -1,12 +1,16 @@
 include "lpm_add_sub.inc";
+include "lpm_mult.inc";
+include "lpm_divide.inc";
 
-constant AU_ADD = b"00";
-constant AU_SUB = b"01";
+constant AU_ADD = h"0";
+constant AU_SUB = h"1";
+constant AU_MUL = h"2";
+constant AU_DIV = h"3";
 
 subdesign au_block
 (
     in1[15..0], in2[15..0] : input;
-    mode[1..0], ena, clk : input;
+    mode[3..0], ena, clk : input;
     reset : input;
 
     out[15..0], of_state : output;
@@ -18,8 +22,27 @@ variable
         lpm_representation = "unsigned",
         lpm_pipeline = 1
     );
+    mul : lpm_mult with (
+        lpm_widtha = 16,
+        lpm_widthb = 16,
+        lpm_widthp = 32,
+        lpm_widths = 1,
+        lpm_representation = "unsigned",
+        lpm_pipeline = 1
+    );
+    divi : lpm_divide with (
+        lpm_widthn = 16,
+        lpm_widthd = 16,
+        lpm_nrepresentation = "unsigned",
+        lpm_drepresentation = "unsigned",
+        lpm_pipeline = 1
+    );
 
 begin
+    defaults
+      add_sub.clken = GND;
+      divi.clken = GND;
+    end defaults;
     state.(clrn, prn, clk) = (VCC, VCC, clk);
     state.ena = ena # reset;
     
@@ -27,13 +50,31 @@ begin
     add_sub.dataa[] = in1[];
     add_sub.datab[] = in2[];
 
+    mul.clock = clk;
+    mul.dataa[] = in1[];
+    mul.datab[] = in2[];
+
+    divi.clock = clk;
+    divi.numer[] = in1[];
+    divi.denom[] = in2[];
+
     case mode[] is
-    when AU_ADD => add_sub.add_sub = VCC;
-    when AU_SUB => add_sub.add_sub = GND;
+    when AU_ADD =>
+        add_sub.clken = VCC;
+        add_sub.add_sub = VCC;
+        out[] = add_sub.result[];
+    when AU_SUB =>
+        add_sub.clken = VCC;
+        add_sub.add_sub = GND;
+        out[] = add_sub.result[];
+    when AU_MUL =>
+        out[] = mul.result[15..0];
+    when AU_DIV =>
+        divi.clken = VCC;
+        out[] = divi.quotient[];
     end case;
 
     state.d = add_sub.overflow & !reset;
 
-    out[] = add_sub.result[] & ena;
     of_state = state.q;
 end;

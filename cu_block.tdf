@@ -5,6 +5,9 @@ constant IC_STA = h"20"; -- mem[ir.addr] = Ar
 constant IC_JMP = h"30"; -- ip = ir.addr
 constant IC_JOV = h"31"; --     if OF == 1
 constant IC_JNOV= h"32"; --     if OF == 0
+constant IC_JL  = h"33"; --     if CMP == L (01)
+constant IC_JE  = h"34"; --     if CMP == E (00)
+constant IC_JG  = h"35"; --     if CMP == G (10)
 constant IC_ADD = h"40"; -- Ar += mem[ir.addr]
 constant IC_SUB = h"41"; -- Ar -= mem[ir.addr]
 constant IC_MUL = h"42"; -- Ar *= mem[ir.addr]
@@ -13,12 +16,14 @@ constant IC_AND = h"44"; -- Ar &= mem[ir.addr]
 constant IC_OR  = h"45"; -- Ar #= mem[ir.addr]
 constant IC_SLA = h"46"; -- Ar <<= ir.addr
 constant IC_SRA = h"47"; -- Ar >>= ir.addr
+constant IC_CMP = h"48"; -- Ar <=> mem[ir.addr]
 
 subdesign cu_block
 (
     clk : input;
     icr[7..0] : input;
     of_state : input;
+    cmp_state[1..0] : input;
 
     ip_mode : output;
     ip_ena : output;
@@ -37,6 +42,7 @@ subdesign cu_block
     au_ena_in : output;
     au_ena_out : output;
     au_of_reset : output;
+    au_cmp_reset : output;
     au_dbus_ena : output;
 
     halted, error : output;
@@ -83,6 +89,7 @@ begin
         au_ena_out = GND;
         au_mode[] = GND;
         au_of_reset = GND;
+        au_cmp_reset = GND;
         au_dbus_ena = GND;
 
         halted = GND;
@@ -143,6 +150,24 @@ begin
                     au_of_reset = VCC;
                     ip_ena = VCC;
 
+                when IC_JL =>           fsm = changing_ip;
+                    ir_abus_ena = !cmp_state[1] & cmp_state[0];
+                    ip_mode = !cmp_state[1] & cmp_state[0];
+                    au_of_reset = VCC;
+                    ip_ena = VCC;
+
+                when IC_JE =>           fsm = changing_ip;
+                    ir_abus_ena = !cmp_state[1] & !cmp_state[0];
+                    ip_mode = !cmp_state[1] & !cmp_state[0];
+                    au_of_reset = VCC;
+                    ip_ena = VCC;
+
+                when IC_JG =>           fsm = changing_ip;
+                    ir_abus_ena = cmp_state[1] & !cmp_state[0];
+                    ip_mode = cmp_state[1] & !cmp_state[0];
+                    au_of_reset = VCC;
+                    ip_ena = VCC;
+
                 when IC_ADD =>          fsm = au_setting_mem_addr;
                     ir_abus_ena = VCC;
 
@@ -165,6 +190,8 @@ begin
 
                 when IC_SRA =>          fsm = au_getting_mem_data;
 
+                when IC_CMP =>          fsm = au_setting_mem_addr;
+                    ir_abus_ena = VCC;
 
                 when others =>          fsm = error;
 
@@ -197,8 +224,9 @@ begin
             au_ena_out = VCC;
             au_mode[] = icr[3..0];
 
-            au_dbus_ena = VCC;
-            ar_ena = VCC;
+            -- write result to dbus and then to Areg (all but CMP)
+            au_dbus_ena = VCC & !(icr[] == IC_CMP);
+            ar_ena = VCC & !(icr[] == IC_CMP);
 
             ip_mode = GND;
             ip_ena = VCC;

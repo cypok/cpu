@@ -13,6 +13,7 @@ subdesign processor
 
     halted, error : output;
     of_state : output;
+    cmp_state[1..0] : output;
     areg[15..0] : output;
 )
 
@@ -54,13 +55,16 @@ begin
     au.mode[] = cu.au_mode[];
     au.ena_in = cu.au_ena_in;
     au.ena_out = cu.au_ena_out;
-    au.reset = cu.au_of_reset;
+    au.of_reset = cu.au_of_reset;
+    au.cmp_reset = cu.au_cmp_reset;
     au.in1[] = ar[].q;
     au.in2[] = dbus[];
     au.in3[] = ir[15..8].q;
 
     cu.of_state = au.of_state;
+    cu.cmp_state[] = au.cmp_state[];
     of_state = au.of_state;
+    cmp_state[] = au.cmp_state[];
 
     for i in 0 to 15 generate
         dbus[i] = tri( mem.dataOut[i], cu.mem_dbus_ena );

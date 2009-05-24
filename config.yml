@@ -5,6 +5,9 @@ instructions:
   jmp:  0x30
   jov:  0x31
   jnov: 0x32
+  jl:   0x33
+  je:   0x34
+  jg:   0x35
   add:  0x40
   sub:  0x41
   mul:  0x42
@@ -13,6 +16,7 @@ instructions:
   or:   0x45
   sla:  0x46
   sra:  0x47
+  cmp:  0x48
   hlt:  0xff
 memory:
   size: 256

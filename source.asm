@@ -3,60 +3,34 @@ start       equ     0x00
 
 ; ------------------------------------
             orig    data
-source      con     0x1234  ; INPUT
-result      con             ; OUTPUT  (bcd)source to bin
 
-
-part        con
-            con
-            con
-            con
-
-mask        con     0xf000
-            con     0x0f00
-            con     0x00f0
-            con     0x000f
-
-ten         con     10
-
-zero        con     0
+n37         con     0x0037
+n15         con     0x0015
+n40         con     0x0040
 
 ; ------------------------------------
             orig    start
-            
-; part1
-            lda     source
-            and     mask
-            sra     12
-            sta     part
 
-; part2
-            lda     source
-            and     mask+1
-            sra     8
-            sta     part+1
+            lda     n37
+g_step      cmp     n15     
+            jl      error
+            je      error
+            jg      e_step
+            jmp     error
 
-; part3
-            lda     source
-            and     mask+2
-            sra     4
-            sta     part+2
+e_step      cmp     n37     
+            jl      error
+            jg      error
+            je      l_step
+            jmp     error
 
-; part4
-            lda     source
-            and     mask+3
-            sta     part+3
+l_step      cmp     n40     
+            jg      error
+            je      error
+            jl      finish
+            jmp     error
 
-; sum up
-            lda     zero
-            add     part      ; a = [1]
-            mul     ten       ; a = [1]*10
-            add     part+1    ; a = [1]*10 + [2]
-            mul     ten       ; a = [1]*100 + [2]*10
-            add     part+2    ; a = [1]*100 + [2]*10 + [3]
-            mul     ten       ; a = [1]*1000 + [2]*100 + [3]*10
-            add     part+3    ; a = [1]*1000 + [2]*100 + [3]*10 + [4]
+finish      hlt            
 
-            sta     result
-
-            hlt
+            orig    0xff
+error       hlt

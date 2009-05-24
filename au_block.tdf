@@ -17,7 +17,7 @@ constant AU_CMP = h"8";
 subdesign au_block
 (
     -- 1 - Areg, 2 - DataBus, 3 - InstructionArg
-    in1[15..0], in2[15..0], in3[15..0] : input;
+    in1[15..0], in2[15..0], in3[7..0] : input;
     mode[3..0], ena_in, ena_out, clk : input;
     of_reset : input;
 

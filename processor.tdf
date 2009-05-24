@@ -52,10 +52,12 @@ begin
     ar[].d = dbus[15..0];
 
     au.mode[] = cu.au_mode[];
-    au.ena = cu.au_ena;
+    au.ena_in = cu.au_ena_in;
+    au.ena_out = cu.au_ena_out;
     au.reset = cu.au_of_reset;
     au.in1[] = ar[].q;
     au.in2[] = dbus[];
+    au.in3[] = ir[15..8].q;
 
     cu.of_state = au.of_state;
     of_state = au.of_state;
@@ -63,8 +65,8 @@ begin
     for i in 0 to 15 generate
         dbus[i] = tri( mem.dataOut[i], cu.mem_dbus_ena );
         dbus[i] = tri( ar[i].q, cu.ar_dbus_ena );
-        dbus[i] = tri( au.out[i], cu.au_ena );
-        dbus[i] = tri( VCC, !(cu.mem_dbus_ena # cu.ar_dbus_ena # cu.au_ena) );
+        dbus[i] = tri( au.out[i], cu.au_dbus_ena );
+        dbus[i] = tri( VCC, !(cu.mem_dbus_ena # cu.ar_dbus_ena # cu.au_dbus_ena) );
     end generate;
 
     for i in 0 to 7 generate

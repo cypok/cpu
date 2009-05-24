@@ -1,22 +1,30 @@
 include "lpm_add_sub.inc";
 include "lpm_mult.inc";
 include "lpm_divide.inc";
+include "lpm_clshift.inc";
 
 constant AU_ADD = h"0";
 constant AU_SUB = h"1";
 constant AU_MUL = h"2";
 constant AU_DIV = h"3";
+constant AU_AND = h"4";
+constant AU_OR  = h"5";
+constant AU_SLA = h"6";
+constant AU_SRA = h"7";
 
 subdesign au_block
 (
-    in1[15..0], in2[15..0] : input;
-    mode[3..0], ena, clk : input;
+    -- 1 - Areg, 2 - DataBus, 3 - InstructionArg
+    in1[15..0], in2[15..0], in3[15..0] : input;
+    mode[3..0], ena_in, ena_out, clk : input;
     reset : input;
 
     out[15..0], of_state : output;
 )
 variable
     state : dffe;
+    bit_out[15..0] : dffe;
+
     add_sub : lpm_add_sub with (
         lpm_width = 16,
         lpm_representation = "unsigned",
@@ -37,44 +45,72 @@ variable
         lpm_drepresentation = "unsigned",
         lpm_pipeline = 1
     );
+    shift : lpm_clshift with (
+        lpm_width = 16,
+        lpm_widthdist = 4
+    );
 
 begin
     defaults
       add_sub.clken = GND;
       divi.clken = GND;
+      state.d = GND;
     end defaults;
-    state.(clrn, prn, clk) = (VCC, VCC, clk);
-    state.ena = ena # reset;
+    (bit_out[], state).(clrn, prn, clk) = (VCC, VCC, clk);
+    state.ena = ena_out # reset;
     
     add_sub.clock = clk;
-    add_sub.dataa[] = in1[];
-    add_sub.datab[] = in2[];
+    add_sub.dataa[] = in1[] & ena_in;
+    add_sub.datab[] = in2[] & ena_in;
 
     mul.clock = clk;
-    mul.dataa[] = in1[];
-    mul.datab[] = in2[];
+    mul.dataa[] = in1[] & ena_in;
+    mul.datab[] = in2[] & ena_in;
 
     divi.clock = clk;
-    divi.numer[] = in1[];
-    divi.denom[] = in2[];
+    divi.numer[] = in1[] & ena_in;
+    divi.denom[] = in2[] & ena_in;
+
+    shift.data[] = in1[] & ena_in;
+    shift.distance[] = in3[3..0] & ena_in;
 
     case mode[] is
     when AU_ADD =>
         add_sub.clken = VCC;
         add_sub.add_sub = VCC;
-        out[] = add_sub.result[];
+        out[] = add_sub.result[] & ena_out;
+        state.d = add_sub.overflow & ena_out & !reset;
     when AU_SUB =>
         add_sub.clken = VCC;
         add_sub.add_sub = GND;
-        out[] = add_sub.result[];
+        out[] = add_sub.result[] & ena_out;
+        state.d = add_sub.overflow & ena_out & !reset;
     when AU_MUL =>
-        out[] = mul.result[15..0];
+        out[] = mul.result[15..0] & ena_out;
+        state.d = !(mul.result[31..16] == GND) & ena_out & !reset;
     when AU_DIV =>
         divi.clken = VCC;
-        out[] = divi.quotient[];
+        out[] = divi.quotient[] & ena_out;
+    when AU_AND =>
+        bit_out[].d = in1[] & in2[];
+        bit_out[].ena = ena_in;
+        out[] = bit_out[].q;
+    when AU_OR =>
+        bit_out[].d = in1[] # in2[];
+        bit_out[].ena = ena_in;
+        out[] = bit_out[].q;
+    when AU_SLA =>
+        shift.direction = GND;
+        bit_out[].d = shift.result[];
+        bit_out[].ena = ena_in;
+        out[] = bit_out[].q;
+    when AU_SRA =>
+        shift.direction = VCC;
+        bit_out[].d = shift.result[];
+        bit_out[].ena = ena_in;
+        out[] = bit_out[].q;
     end case;
 
-    state.d = add_sub.overflow & !reset;
 
     of_state = state.q;
 end;

@@ -9,6 +9,10 @@ instructions:
   sub:  0x41
   mul:  0x42
   div:  0x43
+  and:  0x44
+  or:   0x45
+  sla:  0x46
+  sra:  0x47
   hlt:  0xff
 memory:
   size: 256

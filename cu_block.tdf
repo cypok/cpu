@@ -9,6 +9,10 @@ constant IC_ADD = h"40"; -- Ar += mem[ir.addr]
 constant IC_SUB = h"41"; -- Ar -= mem[ir.addr]
 constant IC_MUL = h"42"; -- Ar *= mem[ir.addr]
 constant IC_DIV = h"43"; -- Ar /= mem[ir.addr]
+constant IC_AND = h"44"; -- Ar &= mem[ir.addr]
+constant IC_OR  = h"45"; -- Ar #= mem[ir.addr]
+constant IC_SLA = h"46"; -- Ar <<= ir.addr
+constant IC_SRA = h"47"; -- Ar >>= ir.addr
 
 subdesign cu_block
 (
@@ -30,8 +34,10 @@ subdesign cu_block
     ar_dbus_ena : output;
 
     au_mode[3..0] : output;
-    au_ena : output;
+    au_ena_in : output;
+    au_ena_out : output;
     au_of_reset : output;
+    au_dbus_ena : output;
 
     halted, error : output;
 )
@@ -73,9 +79,11 @@ begin
         ar_ena = GND;
         ar_dbus_ena = GND;
 
-        au_ena = GND;
+        au_ena_in = GND;
+        au_ena_out = GND;
         au_mode[] = GND;
         au_of_reset = GND;
+        au_dbus_ena = GND;
 
         halted = GND;
         error = GND;
@@ -147,6 +155,16 @@ begin
                 when IC_DIV =>          fsm = au_setting_mem_addr;
                     ir_abus_ena = VCC;
 
+                when IC_AND =>          fsm = au_setting_mem_addr;
+                    ir_abus_ena = VCC;
+
+                when IC_OR =>           fsm = au_setting_mem_addr;
+                    ir_abus_ena = VCC;
+
+                when IC_SLA =>          fsm = au_getting_mem_data;
+
+                when IC_SRA =>          fsm = au_getting_mem_data;
+
 
                 when others =>          fsm = error;
 
@@ -170,11 +188,16 @@ begin
         % AU %
         when au_setting_mem_addr => fsm = au_getting_mem_data;
         when au_getting_mem_data => fsm = au_working;
-            mem_dbus_ena = VCC;
+            mem_dbus_ena = VCC; -- is unused if ICR == SLA or SRA
+
+            au_ena_in = VCC;
             au_mode[] = icr[3..0];
+
         when au_working          => fsm = changing_ip;
+            au_ena_out = VCC;
             au_mode[] = icr[3..0];
-            au_ena = VCC;
+
+            au_dbus_ena = VCC;
             ar_ena = VCC;
 
             ip_mode = GND;

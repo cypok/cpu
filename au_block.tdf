@@ -19,7 +19,7 @@ subdesign au_block
     -- 1 - Areg, 2 - DataBus, 3 - InstructionArg
     in1[15..0], in2[15..0], in3[15..0] : input;
     mode[3..0], ena_in, ena_out, clk : input;
-    of_reset, cmp_reset : input;
+    of_reset : input;
 
     out[15..0], of_state, cmp_state[1..0] : output; -- cmp: E - 00, G - 10, L - 01
 )
@@ -66,7 +66,7 @@ begin
     end defaults;
     (bit_out[], cmp_state_trig[], of_state_trig).(clrn, prn, clk) = (VCC, VCC, clk);
     of_state_trig.ena = ena_out # of_reset;
-    cmp_state_trig[].ena = ena_out # cmp_reset;
+    cmp_state_trig[].ena = ena_out;
     
     add_sub.clock = clk;
     add_sub.dataa[] = in1[] & ena_in;

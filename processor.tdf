@@ -56,7 +56,6 @@ begin
     au.ena_in = cu.au_ena_in;
     au.ena_out = cu.au_ena_out;
     au.of_reset = cu.au_of_reset;
-    au.cmp_reset = cu.au_cmp_reset;
     au.in1[] = ar[].q;
     au.in2[] = dbus[];
     au.in3[] = ir[15..8].q;

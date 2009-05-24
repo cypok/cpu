@@ -42,7 +42,6 @@ subdesign cu_block
     au_ena_in : output;
     au_ena_out : output;
     au_of_reset : output;
-    au_cmp_reset : output;
     au_dbus_ena : output;
 
     halted, error : output;
@@ -89,7 +88,6 @@ begin
         au_ena_out = GND;
         au_mode[] = GND;
         au_of_reset = GND;
-        au_cmp_reset = GND;
         au_dbus_ena = GND;
 
         halted = GND;

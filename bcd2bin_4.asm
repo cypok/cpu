@@ -19,6 +19,7 @@ mask        con     0xf000
             con     0x000f
 
 ten         con     10
+max         con     9
 
 zero        con     0
 
@@ -31,8 +32,7 @@ zero        con     0
             sra     12
             sta     part
 
-            cmp     ten
-            je      error
+            cmp     max
             jg      error
 
 ; part2
@@ -41,8 +41,7 @@ zero        con     0
             sra     8
             sta     part+1
 
-            cmp     ten
-            je      error
+            cmp     max
             jg      error
 
 ; part3
@@ -51,8 +50,7 @@ zero        con     0
             sra     4
             sta     part+2
 
-            cmp     ten
-            je      error
+            cmp     max
             jg      error
 
 ; part4
@@ -60,8 +58,7 @@ zero        con     0
             and     mask+3
             sta     part+3
 
-            cmp     ten
-            je      error
+            cmp     max
             jg      error
 
 ; sum up
